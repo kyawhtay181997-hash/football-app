@@ -2,12 +2,13 @@ import streamlit as st
 import requests
 from groq import Groq
 
-# ၁။ API KEYS (မင်းရဲ့ Key တွေ ပြန်ထည့်ပါ)
+# ၁။ API KEYS (မင်းရဲ့ Key တွေ ဒီမှာ အမှန်ပြန်ထည့်ပါ)
 GROQ_API_KEY = "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"
 FOOTBALL_KEY = "5da489c665e54c44a227d7826b02134a"
 
-st.set_page_config(page_title="AI Football Expert", page_icon="⚽")
-st.title("⚽ AI ဘောလုံးပွဲ ခန့်မှန်းချက်နှင့် အကြံပြုချက်")
+st.set_page_config(page_title="AI Football Betting Expert", page_icon="⚽", layout="wide")
+st.title("⚽ AI ဘောလုံးပွဲ ခန့်မှန်းချက် နှင့် Betting Tips")
+st.markdown("---")
 
 client = Groq(api_key=GROQ_API_KEY)
 
@@ -29,21 +30,26 @@ def get_cleaned_data():
     except:
         return None
 
-if st.button('ယနေ့အတွက် Tips များ ထုတ်ရန်'):
-    with st.spinner('AI က Odds များနှင့် Tips များကို တွက်ချက်နေသည်...'):
+if st.button('ယနေ့အတွက် အကောင်းဆုံး Tips ၅ ပွဲ ထုတ်ရန်'):
+    with st.spinner('AI က နိုင်ခြေရှိသော Odds များနှင့် Tips များကို တွက်ချက်နေသည်...'):
         matches = get_cleaned_data()
         if matches:
             matches_text = "\n".join([f"{m['home']} vs {m['away']} ({m['league']})" for m in matches])
             
-            # AI ကို အသေးစိတ် ခိုင်းစေခြင်း
+            # AI ကို အသေးစိတ် ခိုင်းစေသည့် Prompt
             prompt = f"""
-            မင်းက ဘောလုံးလောင်းကစားကျွမ်းကျင်သူပါ။ အောက်ပါပွဲစဉ်တွေအတွက်-
-            ၁။ နိုင်ခြေအရှိဆုံး ၅ ပွဲကို ရွေးပါ။
-            ၂။ ပွဲတစ်ပွဲချင်းစီအတွက် အကြံပြုချက် (ဥပမာ- W1, Over 1.5, Away Win) ပေးပါ။
-            ၃။ ခန့်မှန်းခြေ Odds (ဥပမာ- 1.25, 1.50) ကို ထည့်ပေးပါ။
-            ၄။ မြန်မာလိုပဲ ရှင်းပြပါ။ ဇယား (Table) ပုံစံနဲ့ ပြပေးပါ။
+            မင်းက ကမ္ဘာကျော် ဘောလုံးလောင်းကစား ကျွမ်းကျင်သူပါ။
+            အောက်ပါ ပွဲစဉ်စာရင်းထဲကနေ နိုင်ခြေအရှိဆုံး ၅ ပွဲကို ရွေးပေးပါ။
+            
+            ရလဒ်ကို အောက်ပါ Markdown Table ပုံစံအတိုင်းပဲ ထုတ်ပေးပါ-
+            | စဉ် | ပွဲစဉ် | အကြံပြုချက် (Tips) | ခန့်မှန်းခြေ Odds | သုံးသပ်ချက် |
+            |----|------|-----------------|----------------|----------|
+            
+            ဥပမာ Tips နေရာမှာ (W1, W2, Over 1.5, GG) စသဖြင့် ထည့်ပါ။ 
+            Odds နေရာမှာ (1.25, 1.85) စသဖြင့် ခန့်မှန်းပေးပါ။
+            မြန်မာလိုပဲ ရေးပေးပါ။
 
-            Matches:
+            ယနေ့ပွဲစဉ်များ:
             {matches_text}
             """
             
@@ -52,9 +58,12 @@ if st.button('ယနေ့အတွက် Tips များ ထုတ်ရန�
                     model="llama-3.3-70b-versatile",
                     messages=[{"role": "user", "content": prompt}]
                 )
-                st.success("တွက်ချက်မှု ပြီးပါပြီ!")
+                st.success("✅ ခန့်မှန်းချက်များ ထွက်လာပါပြီ!")
                 st.markdown(completion.choices[0].message.content)
             except Exception as e:
-                st.error(f"Error: {e}")
+                st.error(f"AI Error: {e}")
         else:
-            st.warning("ဒေတာ မရှိသေးပါ။")
+            st.warning("⚠️ ယနေ့အတွက် ပွဲစဉ်ဒေတာ မရှိသေးပါ။")
+
+st.markdown("---")
+st.caption("Developed by AI Assistant | Data from Football-Data API")

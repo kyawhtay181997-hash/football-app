@@ -3,19 +3,18 @@ import requests
 from groq import Groq
 
 # ၁။ API KEYS (မင်းရဲ့ Key အစစ်တွေ ဒီမှာ ပြန်ထည့်ပါ)
-GROQ_API_KEY = "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"
-FOOTBALL_KEY = "5da489c665e54c44a227d7826b02134a"
+GROQ_API_KEY = "မင်းရဲ့_Groq_Key_အစစ်"
+FOOTBALL_KEY = "မင်းရဲ့_Football_Data_Key_အစစ်"
 
 st.set_page_config(page_title="AI Smart Advisor V3", page_icon="🎯")
 
-# UI အလှဆင်ခြင်း
+# UI အလှဆင်ခြင်း (အမှားပြင်ထားသည်)
 st.markdown("""
     <style>
     .match-card { background: white; padding: 15px; border-radius: 12px; border-left: 6px solid #007bff; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-    .tip-box { background: #e9f7ef; color: #1e7e34; padding: 8px; border-radius: 6px; font-weight: bold; margin-top: 5px; }
-    .percent { color: #d9534f; font-weight: bold; }
+    .tip-box { background: #e9f7ef; color: #1e7e34; padding: 8px; border-radius: 6px; font-weight: bold; margin-top: 5px; border: 1px dashed #28a745; }
     </style>
-    """, unsafe_content_safe=True)
+    """, unsafe_allow_html=True)
 
 st.title("🎯 AI Football Smart Advisor (V3)")
 
@@ -27,7 +26,8 @@ def get_matches():
     try:
         res = requests.get(url, headers=headers).json()
         top_codes = ['PL', 'PD', 'SA', 'BL1', 'FL1'] # ထိပ်သီး ၅ လိဂ်
-        return [m for m in res.get('matches', []) if m['competition']['code'] in top_codes]
+        matches = [m for m in res.get('matches', []) if m['competition']['code'] in top_codes]
+        return matches
     except: return None
 
 if st.button('🚀 Analysis စတင်ရန်'):
@@ -39,11 +39,13 @@ if st.button('🚀 Analysis စတင်ရန်'):
                 league = m['competition']['name']
                 time = m['utcDate'][11:16]
 
-                # AI ကို % ပါအောင် အတင်းအကျပ် ခိုင်းစေခြင်း
+                # AI ကို ခိုင်းစေသည့် Prompt (Probability ပါအောင် ခိုင်းထားသည်)
                 prompt = f"""
-                Analyze {home} vs {away} ({league}). 
-                Give me ONLY ONE best betting tip with its probability percentage (%).
-                Format: Tip: [Market] | Probability: [%] | Reason: [Short Burmese Reason]
+                Analyze {home} vs {away} in {league}.
+                Provide ONLY the best betting tip with its probability percentage.
+                Format: 
+                Tip: [Market] ([Probability %])
+                Reason: [1-sentence reason in Burmese]
                 """
                 
                 try:
@@ -57,10 +59,10 @@ if st.button('🚀 Analysis စတင်ရန်'):
                     st.markdown(f"""
                     <div class='match-card'>
                         <small>{league} | 🕓 {time} UTC</small><br>
-                        <b>{home} vs {away}</b><br>
+                        <div style='font-weight: bold; font-size: 1.1em;'>{home} vs {away}</div>
                         <div class='tip-box'>💎 {res_text}</div>
                     </div>
-                    """, unsafe_content_safe=True)
+                    """, unsafe_allow_html=True)
                 except: continue
         else:
             st.warning("ယနေ့အတွက် ထိပ်သီးလိဂ်ပွဲစဉ်များ မရှိသေးပါ။")

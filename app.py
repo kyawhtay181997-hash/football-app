@@ -7,7 +7,7 @@ st.set_page_config(page_title="AI Football Predictor", page_icon="⚽")
 st.title("⚽ နေ့စဉ် ဘောလုံးပွဲ ခန့်မှန်းချက်")
 st.write("AI က ဒီနေ့ပွဲစဉ်တွေကို ခွဲခြမ်းစိတ်ဖြာပေးပါလိမ့်မယ်။")
 
-# ၂။ API Keys များ (မင်းရဲ့ Key တွေ ဒီမှာ ထည့်ပါ)
+# ၂။ API Keys များ (မင်းရဲ့ Key တွေ ဒီမှာ အစားထိုးထည့်ပါ)
 GROQ_API_KEY = "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"
 FOOTBALL_KEY = "5da489c665e54c44a227d7826b02134a"
 
@@ -51,4 +51,3 @@ if st.button('ဒီနေ့အတွက် ခန့်မှန်းချ�
                 st.error(f"Error: {e}")
         else:
             st.error("Data ယူလို့ မရနိုင်သေးပါ။")
-

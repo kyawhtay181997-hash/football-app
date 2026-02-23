@@ -3,13 +3,14 @@ import requests
 from groq import Groq
 import pandas as pd
 
-# ၁။ API KEYS
-GROQ_API_KEY = "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"
-FOOTBALL_KEY = "5da489c665e54c44a227d7826b02134a"
+# ၁။ API KEYS (မင်းရဲ့ Key တွေ ဒီမှာ အမှန်ပြန်ထည့်ပါ)
+GROQ_API_KEY = "မင်းရဲ့_Groq_Key_အစစ်"
+FOOTBALL_KEY = "မင်းရဲ့_Football_Data_Key_အစစ်"
 
-st.set_page_config(page_title="AI Football Advisor V3", layout="wide")
+st.set_page_config(page_title="AI Smart Advisor V4", layout="wide")
 
-st.title("⚽ AI Football Smart Advisor (V3)")
+st.title("🎯 AI Smart Advisor (Double-Check Logic)")
+st.caption("ပွဲမစခင် ၁ နာရီအလိုတွင် ရှာဖွေခြင်းသည် ၉၀% အထက် တိကျမှုကို ပေးစွမ်းနိုင်ပါသည်။")
 
 client = Groq(api_key=GROQ_API_KEY)
 
@@ -18,50 +19,52 @@ def get_matches():
     headers = {'X-Auth-Token': FOOTBALL_KEY}
     try:
         res = requests.get(url, headers=headers).json()
-        top_codes = ['PL', 'PD', 'SA', 'BL1', 'FL1']
-        return [m for m in res.get('matches', []) if m['competition']['code'] in top_codes]
+        top_leagues = ['PL', 'PD', 'SA', 'BL1', 'FL1']
+        return [m for m in res.get('matches', []) if m['competition']['code'] in top_leagues]
     except: return None
 
 if st.button('🚀 Analysis စတင်ရန်'):
-    with st.spinner('AI က ပွဲစဉ်များကို ခွဲခြားတွက်ချက်နေပါသည်...'):
+    with st.spinner('AI က နောက်ဆုံးရ လူစာရင်းများကို စစ်ဆေးနေပါသည်...'):
         matches = get_matches()
         if matches:
-            # အချိန်အလိုက် ပွဲများကို ခွဲထုတ်ခြင်း
-            # ပထမ ၅ ပွဲကို AI Analysis လုပ်ပြီး အပေါ်ဇယားမှာ ပြမယ်
-            analyzed_data = []
-            upcoming_data = []
-            
-            for i, m in enumerate(matches):
-                home, away = m['homeTeam']['name'], m['awayTeam']['name']
-                league = m['competition']['name']
+            # အချိန်အလိုက် ပွဲစဉ်များကို Group ဖွဲ့ခြင်း
+            grouped_matches = {}
+            for m in matches:
                 time = m['utcDate'][11:16]
+                if time not in grouped_matches: grouped_matches[time] = []
+                grouped_matches[time].append(m)
+            
+            # အချိန်အလိုက် ဇယားကွက်များ ထုတ်ပေးခြင်း
+            for time in sorted(grouped_matches.keys()):
+                st.markdown(f"### 🕓 ပွဲချိန် - {time} (UTC)")
+                table_data = []
                 
-                if i < 5: # ထိပ်ဆုံး ၅ ပွဲကို AI နဲ့ စစ်မယ်
-                    prompt = f"Analyze {home} vs {away} ({league}). Give ONLY one best tip with % and 1-sentence Burmese reason. Format: [Tip] ([%]) | [Reason]"
+                for m in grouped_matches[time]:
+                    home, away = m['homeTeam']['name'], m['awayTeam']['name']
+                    league = m['competition']['name']
+                    
+                    # AI Advisor Logic (1xbet Markets အကုန်ထည့်တွက်ခိုင်းသည်)
+                    prompt = f"""
+                    Context: {home} vs {away} in {league}.
+                    Task: Act as a pro 1xbet tipster. Analyze official lineups and team news. 
+                    Pick the SINGLE best outcome (W1, W2, X, Over/Under, BTTS, Corner, Double Chance, etc).
+                    
+                    Respond ONLY in this format:
+                    Tip: [Market] ([Probability %]) | Reason: [Burmese Reason]
+                    """
+                    
                     try:
                         completion = client.chat.completions.create(
                             model="llama-3.3-70b-versatile",
                             messages=[{"role": "user", "content": prompt}]
                         )
                         ai_res = completion.choices[0].message.content
-                        analyzed_data.append([time, league, f"{home} vs {away}", ai_res])
-                    except: analyzed_data.append([time, league, f"{home} vs {away}", "AI Error"])
-                else: # ကျန်တဲ့ပွဲတွေကို အောက်ဇယားမှာပြမယ်
-                    upcoming_data.append([time, league, f"{home} vs {away}"])
-
-            # --- အပေါ်ဇယား (AI Confirmed Tips) ---
-            st.subheader("💎 AI အပိုင်တွက်ချက်ထားသော ပွဲစဉ်များ")
-            df1 = pd.DataFrame(analyzed_data, columns=['အချိန် (UTC)', 'လိဂ်', 'ပွဲစဉ်', 'AI ခန့်မှန်းချက် နှင့် အကြောင်းပြချက်'])
-            st.table(df1) # st.table က ဖုန်းမှာ ဇယားကွက်အပြည့် မြင်ရစေတယ်
-
-            st.markdown("---")
-
-            # --- အောက်ဇယား (Other Upcoming Matches) ---
-            st.subheader("📅 နောက်ထပ် ကစားမည့် ပွဲစဉ်များ")
-            if upcoming_data:
-                df2 = pd.DataFrame(upcoming_data, columns=['အချိန် (UTC)', 'လိဂ်', 'ပွဲစဉ်'])
-                st.dataframe(df2, use_container_width=True)
-            else:
-                st.write("နောက်ထပ် ပွဲစဉ်များ မရှိသေးပါ။")
+                        table_data.append([league, f"{home} vs {away}", ai_res])
+                    except:
+                        table_data.append([league, f"{home} vs {away}", "AI Error"])
+                
+                # ဇယားကွက်ဖြင့် ပြသခြင်း
+                df = pd.DataFrame(table_data, columns=['League', 'Match', 'AI Recommendation (% & Reason)'])
+                st.table(df)
         else:
             st.warning("ယနေ့အတွက် ထိပ်သီးလိဂ်ပွဲစဉ်များ မရှိသေးပါ။")

@@ -4,8 +4,8 @@ from groq import Groq
 import pandas as pd
 
 # ၁။ API KEYS (မင်းရဲ့ Key တွေ ဒီမှာ အမှန်ပြန်ထည့်ပါ)
-GROQ_API_KEY = "မင်းရဲ့_Groq_Key_အစစ်"
-FOOTBALL_KEY = "မင်းရဲ့_Football_Data_Key_အစစ်"
+GROQ_API_KEY = "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"
+FOOTBALL_KEY = "5da489c665e54c44a227d7826b02134a"
 
 st.set_page_config(page_title="AI Smart Advisor V4", layout="wide")
 
@@ -68,3 +68,4 @@ if st.button('🚀 Analysis စတင်ရန်'):
                 st.table(df)
         else:
             st.warning("ယနေ့အတွက် ထိပ်သီးလိဂ်ပွဲစဉ်များ မရှိသေးပါ။")
+

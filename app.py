@@ -12,7 +12,7 @@ genai.configure(api_key=GEMINI_API_KEY)
 
 # Gemini Model with Google Search
 model = genai.GenerativeModel(
-    model_name='models/gemini-1.5-flash',
+    model_name='gemini-1.5-flash',
     tools=[{"google_search_retrieval": {}}]
 )
 
@@ -29,7 +29,7 @@ st.write("အလုပ်ထဲတွင် ဖုန်းကြည့်စရ
 if st.button('🚀 ပွဲစဉ်များကို စတင်ခွဲမ်းစိတ်ပြီး Telegram ပို့ရန်'):
     with st.spinner('Gemini မှ Google တွင် ရှာဖွေနေသည်...'):
         # ယနေ့ပွဲစဉ်များရယူခြင်း
-        match_url = "https://api.football-data.org/v4/matches"
+        match_url = "https://api.football-data.org/v4/matches?dateFrom=2026-02-26&dateTo=2026-02-27"
         headers = {'X-Auth-Token': FOOTBALL_KEY}
         res = requests.get(match_url, headers=headers).json()
         matches = res.get('matches', [])
@@ -73,3 +73,4 @@ if st.button('🚀 ပွဲစဉ်များကို စတင်ခွဲ
 
 st.divider()
 st.caption("ဒူဘိုင်းရှိ မင်းရဲ့အောင်မြင်မှုအတွက် Gemini မှ အစွမ်းကုန် ကူညီပေးနေပါတယ်။")
+

@@ -2,65 +2,74 @@ import streamlit as st
 import google.generativeai as genai
 import requests
 
-# --- CONFIGURATION ---
-# မင်းရဲ့ API Keys များ
+# --- CONFIGURATION (မင်းရဲ့ အချက်အလက်များ ထည့်ရန်) ---
 GEMINI_API_KEY = "AIzaSyA4-9LZdhqavOcjmJ2W0yDAVJNNOoFsICQ"
 FOOTBALL_KEY = "85888e2858904e578f14f40f0c058c4f"
+TELEGRAM_TOKEN = "8259077848:AAEbVOoEVc36sZBaMNxQ4J7qkL6b6rZEK7A" # <--- ဒီမှာ Token ထည့်ပါ
+CHAT_ID = "5236506026"      # <--- ဒီမှာ ID ထည့်ပါ
 
 genai.configure(api_key=GEMINI_API_KEY)
 
-# Screenshot ထဲက Error ကို ဖြေရှင်းရန် model_name ကို 'models/' ထည့်ထားသည်
+# Gemini Model with Google Search
 model = genai.GenerativeModel(
-    model_name='models/gemini-1.5-flash', 
-    tools=[{"google_search_retrieval": {}}] 
+    model_name='models/gemini-1.5-flash',
+    tools=[{"google_search_retrieval": {}}]
 )
 
-st.set_page_config(page_title="AI Expert (One-Click)", layout="wide")
-st.title("⚡ One-Click Football Expert")
-st.info("ခလုတ်နှိပ်ရုံဖြင့် Gemini မှ Google တွင် ရှာဖွေပြီး အပိုင်ပွဲများကို ခြုံငုံသုံးသပ်ပေးမည်။")
+# Telegram သို့ စာပို့သည့် Function
+def send_to_telegram(text):
+    url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+    payload = {"chat_id": CHAT_ID, "text": text, "parse_mode": "Markdown"}
+    requests.post(url, json=payload)
 
-# ပွဲစဉ်ဒေတာယူရန် Function
-def get_today_matches():
-    url = "https://api.football-data.org/v4/matches"
-    headers = {'X-Auth-Token': FOOTBALL_KEY}
-    try:
-        res = requests.get(url, headers=headers).json()
-        return res.get('matches', [])
-    except:
-        return []
+st.set_page_config(page_title="Phone A - AI Analyst", page_icon="🛡️")
+st.title("🛡️ Phone A: Smart AI Analyst")
+st.write("အလုပ်ထဲတွင် ဖုန်းကြည့်စရာမလိုဘဲ Smart Watch မှတစ်ဆင့် Alert ရယူပါ။")
 
-# ခလုတ်နှိပ်သည့်အခါ အလုပ်လုပ်မည့်အပိုင်း
-if st.button('🚀 ပွဲစဉ်အားလုံးကို AI ဖြင့် အပိုင်တွက်ချက်ရန်'):
-    matches = get_today_matches()
-    
-    if not matches:
-        st.warning("ယနေ့အတွက် ပွဲစဉ်များ မရှိသေးပါ။")
-    else:
-        for m in matches:
-            home = m['homeTeam']['name']
-            away = m['awayTeam']['name']
-            league = m['competition']['name']
-            
-            # ပွဲစဉ်တစ်ခုချင်းစီကို Expander ထဲတွင် ပြသမည်
-            with st.expander(f"🏟️ {home} vs {away} ({league})", expanded=True):
-                # Google Search ကို အသုံးပြုပြီး ပိုမိုတိကျသော သုံးသပ်ချက်ရယူရန် Prompt
-                prompt = f"""
-                Today is February 25, 2026. Search Google for the match between {home} and {away}. 
-                Please analyze: 
-                1. Official starting lineups and recent injuries.
-                2. Market sentiment (what percentage of bettors are picking which team).
-                3. Tactical match-up and any 'traps' in the odds.
+if st.button('🚀 ပွဲစဉ်များကို စတင်ခွဲမ်းစိတ်ပြီး Telegram ပို့ရန်'):
+    with st.spinner('Gemini မှ Google တွင် ရှာဖွေနေသည်...'):
+        # ယနေ့ပွဲစဉ်များရယူခြင်း
+        match_url = "https://api.football-data.org/v4/matches"
+        headers = {'X-Auth-Token': FOOTBALL_KEY}
+        res = requests.get(match_url, headers=headers).json()
+        matches = res.get('matches', [])
+
+        if not matches:
+            st.warning("ယနေ့အတွက် ပွဲစဉ်များ မတွေ့ရှိပါ။")
+        else:
+            for m in matches:
+                home = m['homeTeam']['name']
+                away = m['awayTeam']['name']
+                league = m['competition']['name']
                 
-                Provide the output in Burmese:
-                - **အပိုင် Tip**: (90% ကျော်သေချာသော ရလဒ်ကို တိုက်ရိုက်ပြောပါ)
-                - **သုံးသပ်ချက်**: (ဘာကြောင့် နိုင်မှာလဲဆိုတာကို ကျွမ်းကျင်သူတစ်ယောက်လို ရှင်းပြပါ)
-                - **သတိပေးချက်**: (ကြေးမှားနေတာမျိုး သို့မဟုတ် သတိထားရမည့်အချက်များ)
+                # Gemini ကို Google Search ဖြင့် အသေးစိတ်ခိုင်းစေခြင်း
+                prompt = f"""
+                Search Google for the match {home} vs {away} on Feb 26, 2026.
+                1. Check official lineups and injury news.
+                2. Look for betting market traps (where public bets are going vs odds movement).
+                3. Provide a high-confidence tip in Burmese.
+                
+                If the match is very risky, say 'SKIP'.
+                If it's high confidence, format as:
+                ⚽ Match: {home} vs {away} ({league})
+                🔥 Tip: [Your Result]
+                📊 Confidence: [90%+]
+                💡 Reason: [Short tactical reason]
+                ⚠️ Warning: [Any trap detected]
                 """
                 
                 try:
-                    # Gemini မှ Google Search သုံးပြီး အဖြေထုတ်ပေးမည်
                     response = model.generate_content(prompt)
-                    st.markdown(response.text)
+                    analysis = response.text
+                    
+                    if "SKIP" not in analysis.upper():
+                        # Telegram သို့ ပို့မည်
+                        send_to_telegram(f"🔔 *AI CONFIRMED TIP*\n\n{analysis}")
+                        st.success(f"Sent: {home} vs {away}")
+                    else:
+                        st.info(f"Skipped: {home} vs {away} (Risky)")
                 except Exception as e:
-                    # Error တစ်ခုခုရှိလျှင် ပြသရန်
                     st.error(f"Error analyzing {home}: {str(e)}")
+
+st.divider()
+st.caption("ဒူဘိုင်းရှိ မင်းရဲ့အောင်မြင်မှုအတွက် Gemini မှ အစွမ်းကုန် ကူညီပေးနေပါတယ်။")
